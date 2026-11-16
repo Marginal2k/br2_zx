@@ -1,0 +1,9 @@
+boot
+w600
+Kx
+w150
+K1
+w400
+s:g2_start
+w30
+c:g2_start_canvas

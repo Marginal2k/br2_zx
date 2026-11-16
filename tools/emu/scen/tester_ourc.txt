@@ -1,0 +1,10 @@
+boot
+w600
+c:our_menu
+Kx
+w150
+K2
+w400
+c:our_canvas_lvl
+w300
+c:our_canvas_lvl2

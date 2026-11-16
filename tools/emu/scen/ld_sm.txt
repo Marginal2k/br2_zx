@@ -1,0 +1,10 @@
+boot
+w1000
+Kx
+rt:A08E:900
+s:main
+K3
+rt:A06B:300
+rt:A08E:300
+s:slot
+r:x

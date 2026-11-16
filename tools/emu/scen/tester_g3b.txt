@@ -1,0 +1,7 @@
+boot
+w600
+Kx
+w150
+K2
+w400
+s:g3s_start

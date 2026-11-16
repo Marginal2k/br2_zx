@@ -1,0 +1,9 @@
+boot
+w600
+Kx
+w150
+K2
+w400
+c:r_canvas_lvl
+w300
+c:r_canvas_lvl2

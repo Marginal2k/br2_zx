@@ -1,0 +1,13 @@
+boot
+w600
+Kx
+w150
+K1
+w400
+hP:50:3
+hA:32:3
+kSpace
+w60
+hQ:60:3
+w10
+s:o3_up60

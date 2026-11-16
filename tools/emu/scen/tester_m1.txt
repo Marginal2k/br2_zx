@@ -1,0 +1,8 @@
+boot
+w600
+s:t8_1mb_menu_intro
+Kx
+w200
+K2
+w600
+s:t8_1mb_game_side_hum

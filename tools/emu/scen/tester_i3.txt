@@ -1,0 +1,14 @@
+boot
+w600
+Kx
+w200
+K2
+w400
+s:t7c_prompt
+ins:0:br2_game.trd
+w100
+KEnter
+w600
+s:t7c_after_enter
+w400
+s:t7c_game

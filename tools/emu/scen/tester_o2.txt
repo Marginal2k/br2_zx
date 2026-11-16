@@ -1,0 +1,17 @@
+boot
+w600
+Kx
+w150
+K1
+w400
+hP:50:3
+hA:32:3
+kSpace
+w60
+s:o2_pause
+kN
+w60
+s:o2_afterN
+hQ:10:3
+w10
+s:o2_c1

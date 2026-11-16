@@ -1,0 +1,13 @@
+boot
+w600
+s:t7_intro_boot
+c:t7_intro_canvas_boot
+w200
+K1
+w600
+c:t7_intro_canvas_roller_a
+w1500
+s:t7_roller_b
+c:t7_intro_canvas_roller_b
+w2500
+s:t7_roller_c

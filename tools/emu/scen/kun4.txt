@@ -1,0 +1,9 @@
+boot
+w1000
+Kx
+w300
+d2
+w70
+u2
+w5
+js:jl:jl0

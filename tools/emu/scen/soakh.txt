@@ -1,0 +1,12 @@
+boot
+w1000
+Kx
+w300
+K1
+w2500
+s:hum2500
+hP:60:3
+hA:40:3
+kSpace
+w1200
+s:hum3700

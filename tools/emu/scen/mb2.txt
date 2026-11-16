@@ -1,0 +1,6 @@
+boot
+w500
+K2
+w1500
+s:g1mb
+r:x

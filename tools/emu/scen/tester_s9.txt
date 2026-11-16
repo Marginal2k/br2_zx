@@ -1,0 +1,13 @@
+boot
+w600
+Kx
+w150
+K3
+w300
+s:t6h_after3
+k1
+w200
+s:t6h_after1
+kEnter
+w300
+s:t6h_enter

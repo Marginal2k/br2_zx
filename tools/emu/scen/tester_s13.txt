@@ -1,0 +1,15 @@
+boot
+w1000
+Kx
+w300
+K3
+w300
+K5
+w10
+s:t6k_a
+w20
+s:t6k_b
+w40
+s:t6k_c
+w100
+s:t6k_d

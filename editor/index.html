@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Редактор уровней Black Raven 2</title>
+<link rel="stylesheet" href="css/editor.css">
+</head>
+<body>
+<header id="top">
+  <span class="brand">Чёрный Ворон 2 · редактор уровней</span>
+  <div class="grp">
+    <button id="bSamples" title="Открыть один из уровней игры, встроенных в редактор (карты автора из архива демо)">Уровни игры…</button>
+    <button id="bNew" title="Новый уровень: пустая карта с границей">Новый…</button>
+    <label class="btn" title="Файлы .MAP (4353 байта) и .HER (496 байт); можно выбрать оба сразу, а также .TSK и .TS2">Открыть .MAP + .HER<input type="file" id="fMap" accept=".map,.her,.tsk,.ts2" multiple hidden></label>
+    <label class="btn" title="Проект редактора (.json)">Открыть проект<input type="file" id="fPrj" accept=".json" hidden></label>
+  </div>
+  <div class="grp">
+    <button id="bSavePrj" title="Сохранить проект (.json): всё состояние уровня">Сохранить проект</button>
+    <button id="bExpMap" title="Файлы .MAP и .HER: карта, миникарта, тип уровня; герои. Именно так их пишет MAPPER автора">Экспорт .MAP + .HER</button>
+    <button id="bExpDir" title="Записать .MAP, .HER, .TSK, .TS2 в каталог (например, br2/assets/map) или в .zip, если браузер не умеет писать в каталог">Экспорт в каталог</button>
+  </div>
+  <div class="grp">
+    <button id="bUndo" title="Отменить (Ctrl+Z)">↶</button>
+    <button id="bRedo" title="Вернуть (Ctrl+Y)">↷</button>
+  </div>
+  <div class="grp">
+    <label>Имя <input id="lvName" size="9" spellcheck="false" title="Файлы называются 4_N.MAP и 4_N.HER, где N - номер уровня"></label>
+  </div>
+  <span id="dirty"></span>
+  <select id="lang" title="Язык / Language"><option value="ru">RU</option><option value="en">EN</option></select>
+</header>
+
+<main>
+  <aside id="side">
+    <nav id="tabs">
+      <button data-tab="map" class="on">Карта</button>
+      <button data-tab="heroes">Герои</button>
+      <button data-tab="level">Уровень</button>
+      <button data-tab="task">Задание</button>
+      <button data-tab="check">Проверка <span id="chkBadge"></span></button>
+    </nav>
+
+    <section id="tab-map" class="tab on">
+      <div class="tools">
+        <button data-tool="brush" class="on" title="Кисть (B): ЛКМ - рисовать, ПКМ - взять тайл с карты">Кисть</button>
+        <button data-tool="rect" title="Прямоугольник (R): протянуть ЛКМ">Прямоуг.</button>
+        <button data-tool="pick" title="Пипетка (I): щелчок - взять тайл или здание с карты">Пипетка</button>
+        <button data-tool="building" title="Здание (U): щелчок - поставить здание 3x3 целиком (центр там, где курсор)">Здание</button>
+        <button data-tool="erase" title="Снести здание (E): щелчок по любой его части">Снести</button>
+        <button data-tool="hand" title="Рука (H) - двигать вид; ещё: средняя кнопка или пробел + ЛКМ">Рука</button>
+      </div>
+      <div class="opts">
+        <label><input type="checkbox" id="optGrid"> сетка</label>
+        <label><input type="checkbox" id="optHeroes" checked> герои</label>
+        <label><input type="checkbox" id="optPass"> проходимость</label>
+        <label><input type="checkbox" id="optParts"> области</label>
+        <label><input type="checkbox" id="optFog"> туман</label>
+        <label><input type="checkbox" id="optIssues" checked> ошибки</label>
+        <label><input type="checkbox" id="optMono"> ч/б</label>
+      </div>
+      <div id="curTile" class="cur"></div>
+      <h3>Тайлы <small>(0 - граница; 1..40 проходимы, 41..100 нет)</small></h3>
+      <div id="palTiles" class="pal"></div>
+      <h3>Здания <small>(3x3, ставятся целиком; центр 102..119, хвосты 120..127)</small></h3>
+      <div id="palBuild" class="pal build"></div>
+    </section>
+
+    <section id="tab-heroes" class="tab">
+      <div class="row">
+        <label>Чей
+          <select id="hSide"><option value="0">0 - люди</option><option value="1">1 - кунги</option><option value="2">2 - пленники</option><option value="4">4 - предметы</option></select>
+        </label>
+      </div>
+      <p class="hint">ЛКМ по пустой клетке - поставить, по герою - выбрать и тащить; Del или ПКМ - удалить. Одна запись на клетку (как в MAPPER).</p>
+      <div id="palHeroes" class="pal heroes"></div>
+      <div id="heroEdit" class="box"></div>
+      <div id="heroCount" class="hint"></div>
+      <div class="tblwrap"><table id="heroList"><thead><tr><th>#</th><th>чей</th><th>тип</th><th>x</th><th>y</th><th>патруль</th></tr></thead><tbody></tbody></table></div>
+    </section>
+
+    <section id="tab-level" class="tab">
+      <div id="levelForm"></div>
+      <h3>Миникарта <small>(строится по карте сама, как режим «карта» в игре)</small></h3>
+      <canvas id="gameMini" width="192" height="192" title="Щелчок - перейти к месту на карте"></canvas>
+      <p class="hint">Рисовать её не нужно: каждая клетка показана значком 3x3 из таблицы ландшафта игры (MPsign, src/game/map.asm), герои - значками людей, кунгов и пленников. Щелчок переносит основное окно к этому месту.</p>
+      <h3>Миникарта областей <small>(служебная, для файла .MAP: 32x32 квадрата 2x2, 2 бита на квадрат)</small></h3>
+      <canvas id="miniView" width="32" height="32"></canvas>
+      <div id="miniInfo" class="hint"></div>
+      <p class="hint">Миникарта и байт типа при сохранении строятся заново по алгоритму MAPPER (div_map / biterize): области связности проходимых клеток, 8 соседей. Игра v0.04 их из файла уровня не читает - см. README.</p>
+    </section>
+
+    <section id="tab-task" class="tab">
+      <div class="box warnbox"><b>Задание в игре v0.04 не показывается.</b> Файлы .TSK/.TS2 в архиве принадлежат уровням 4_000 и 4_800; для уровней 4_4 и 4_10 заданий в данных нет, а игра v0.04 брифинг уровня не выводит. Редактор правит тексты по формату автора (4TSKTXT2.CPP), но попасть в игру они сейчас не могут.</div>
+      <div class="row"><select id="taskSample"></select><button id="bTaskSample" title="Подставить тексты заданий уровня автора (TASK/*.TSK, *.TS2), чтобы увидеть формат">Взять пример из архива</button></div>
+      <h3>Короткое задание <small>.TSK: до 4 строк по 20 знаков</small></h3>
+      <textarea id="taskTsk" rows="4" spellcheck="false"></textarea>
+      <div id="tskInfo" class="hint"></div>
+      <canvas id="tskPreview" width="160" height="32"></canvas>
+      <h3>Полное задание <small>.TS2: до 24 строк по 32 знака</small></h3>
+      <textarea id="taskTs2" rows="10" spellcheck="false"></textarea>
+      <div id="ts2Info" class="hint"></div>
+      <canvas id="ts2Preview" width="256" height="192"></canvas>
+      <p class="hint">Строки центрируются сами, как в 4TSKTXT2. Латинские и кириллические буквы одинакового вида - разные знаки шрифта; <code>{N}</code> - знак шрифта по номеру. Знак <code>*</code> в оригинале переключает яркость текста - предпросмотр показывает его как обычный знак.</p>
+      <h3>Знаки шрифта <small>(щелчок - вставить)</small></h3>
+      <div id="glyphs"></div>
+    </section>
+
+    <section id="tab-check" class="tab">
+      <p class="hint">Проверка идёт сама после каждой правки (правила MAPPER ERR1..ERR7 и замечания редактора). Перед экспортом с ошибками редактор переспросит. Щелчок по строке - показать место на карте.</p>
+      <ul id="issues"></ul>
+    </section>
+  </aside>
+
+  <div id="view">
+    <canvas id="cv"></canvas>
+    <div id="zoomBox"><button id="zOut">−</button><span id="zVal"></span><button id="zIn">+</button><button id="zFit" title="Вся карта">⤢</button></div>
+  </div>
+</main>
+<footer id="status"></footer>
+
+<dialog id="dlg"><form method="dialog"><div id="dlgBody"></div><div class="row end"><button value="cancel">Отмена</button> <button id="dlgOk" value="ok">OK</button></div></form></dialog>
+
+<script src="data/br2data.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/core.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

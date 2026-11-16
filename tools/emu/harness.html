@@ -1,0 +1,27 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>br harness</title>
+<body>
+<iframe id="f" style="width:1000px;height:760px"></iframe>
+<pre id="out">starting</pre>
+<script>
+(async () => {
+  const out = document.getElementById('out');
+  const q = new URLSearchParams(location.search);
+  try {
+    const f = document.getElementById('f');
+    // beta=1: enable the Beta Disk interface setting (needed for TR-DOS on 128K/+2/+3) before the emulator page starts
+    try { if (q.get('beta') === '1') localStorage.setItem('zxm8_betaDisk', 'true'); } catch (e) { }
+    f.src = '/index.html';
+    await new Promise(r => f.addEventListener('load', r));
+    for (let i = 0; i < 1200 && !(f.contentWindow.zxDebug); i++) await new Promise(r => setTimeout(r, 50));
+    const zx = f.contentWindow.zxDebug;
+    const mod = await import('/h/scripts/' + q.get('script') + '.js');
+    const res = await mod.run(zx, q, f.contentWindow);
+    out.textContent = 'DONE ' + JSON.stringify(res || {}).slice(0, 600);
+  } catch (e) {
+    out.textContent = 'ERROR ' + (e && e.stack || e);
+  }
+})();
+</script>
+</body>

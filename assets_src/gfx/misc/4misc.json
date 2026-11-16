@@ -1,0 +1,19 @@
+{
+ "outputs": {
+  "hum/WM22.bin": {
+   "len": 2880
+  },
+  "data/4misc4x4.dat": {
+   "len": 768
+  },
+  "data/4misc1x1.dat": {
+   "len": 640
+  },
+  "data/4misc1x2.dat": {
+   "len": 256
+  },
+  "hum/WM33.bin": {
+   "len": 1296
+  }
+ }
+}

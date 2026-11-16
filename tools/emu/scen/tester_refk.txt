@@ -1,0 +1,11 @@
+boot
+w600
+s:r_a
+Kx
+w150
+s:r_b
+K2
+w400
+s:r_c
+w300
+s:r_d

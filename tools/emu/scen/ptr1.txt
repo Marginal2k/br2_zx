@@ -1,0 +1,12 @@
+boot
+w1200
+Kx
+w100
+K1
+w400
+hP:40:3
+hA:32:3
+m:mx1:74A4:2
+kSpace
+w60
+s:pause

@@ -1,0 +1,8 @@
+# boot, watch the loader / logo
+w100
+c:b100
+w400
+c:b500
+w1000
+c:b1500
+r:boot

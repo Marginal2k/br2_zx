@@ -1,0 +1,1306 @@
+;звуковые эффекты   (C) Copper Feet [sept.1997,99]
+;--------------- Звук (в осн.стр)-----------------
+
+;частотаМЛ (FF-конец),частотаСТ,громкость,шум (FF-НЕТ)
+
+;типы см в 4~DATAS.A80
+;isGS equ #4000 - 0-нет GS, не0-тип GS
+
+tSOUND	DEFB	#63,#EA,#4E,#EA,#4E,#EA,#2E,#EA,#2E,#EA,#BF,#EA,#8A,#EA,#63,#EA,#85,#EA
+	DEFB	#85,#EA,#80,#EA,#85,#EA,#2E,#EA,#2E,#EA,#85,#EA,#CC,#EA,#24,#EB,#24,#EB
+; ---- v0.04: changed/new code or data (4.Z80: SOUNDix (пустой звук) (эфф запрещ))
+	ADD	HL,BC
+	LD	A,(BC)
+	LD	A,(BC)
+	RRCA
+	DEC	BC
+	RLCA
+	INC	C
+	EX	AF,af'
+	EX	AF,af'
+	EX	AF,af'
+	DEC	B
+	LD	A,(BC)
+	RRCA
+	RRCA
+	ADD	HL,BC
+	ADD	HL,DE
+	INC	D
+	INC	D
+SOUNDde
+	LD	L,(IY+#01)
+	LD	H,(IY+#02)
+	LD	(levSND+1),HL
+	LD	IX,levSND+1
+SOUNDn
+	CP	#FF
+	RET	Z
+	LD	D,A
+	LD	A,(MUSONF+1)
+	OR	A
+	RET	Z
+	LD	A,(isGS)
+	OR	A
+	JR	Z,.SOUNDn_1
+	CALL	MEM6
+	LD	A,D
+	CALL	ZZtimer
+	JP	MEM0
+.SOUNDn_1
+	LD	A,D
+	CP	#12
+	RET	NC
+	LD	HL,tSOUND+36
+	CALL	BA
+	LD	A,(priv_S)
+	CP	(HL)
+	RET	NC
+	LD	A,(HL)
+	LD	(priv_2),A
+	LD	A,D
+	LD	HL,tSOUND
+	CALL	WT
+	LD	(NOTA2),HL
+	CALL	HL_IX0
+	CALL	GMAP
+	BIT	7,(HL)
+	RET	NZ
+	LD	HL,(X0)
+	LD	A,L
+	ADD	A,#06
+	LD	L,A
+	LD	A,H
+	ADD	A,#07
+	LD	H,A
+
+prvSND ; приоритет
+
+;#EEC9(стр.6) - адрес хранения упр. регистра AY для протрекера
+;часть эффектов в стр.3
+
+SOUNDix	; (в v0.04 код удалён, метка сохранена для ссылок)
+;
+;
+;опр видимости источника звука
+;опред громкости в зависимости от дальности
+	CALL	DIST2
+	SUB	6
+	JR	NC,lso1
+;в экране - макс громкость
+	XOR	A
+	JR	lso0
+lso1	CP	6
+	RET	NC ;в радиусе >12
+lso0	LD	(levSND),A
+	LD	HL,(NOTA2)
+	LD	(NOTA),HL
+	LD	A,(priv_2)
+	LD	(priv_S),A
+	RET
+
+;----------------вызов эффектов
+
+setNBFX ;выбор эффектов для снарядов/взрывов (A)
+	CP	31
+	RET	NC ;>31 - без звука
+	PUSH	AF
+	PUSH	HL
+	LD	HL,FX_N
+	CALL	BA ;получить номер эффекта
+	CP	-1
+	JR	Z,snbxE ;нет эфф
+	LD	HL,SOUNDn
+	BIT	7,A
+	JR	Z,snbxP
+	AND	#7F
+	LD	HL,SOUNDde
+snbxP	LD	(JP_SUB+1),HL
+	PUSH	BC
+	PUSH	DE
+	PUSH	IX
+	CALL	JP_SUB
+	POP	IX
+	POP	DE
+	POP	BC
+snbxE	POP	HL
+	POP	AF
+	RET
+
+
+Hv_FX	LD	A,(IX+typ) ;FX-эффект удара
+	LD	C,10
+	OR	A ;робот
+	JR	Z,HvF2
+	CP	12 ;пеон
+; ---- v0.04: changed/new code or data
+	JR	Z,HvF2+8
+	LD	C,7 ;кракотун
+	CP	16
+	JR	Z,HvF1
+	LD	C,0 ;демон
+	CP	17
+	RET	NZ
+HvF1	LD	A,C
+	JP	SOUNDn
+HvF2	LD	A,(IX+com)
+	CP	25
+	JR	Z,HvF1
+; ---- v0.04: changed/new code or data (4.Z80: SOUNDXn setGS_7 (0 ;фиктивный для взрывов))
+	RET
+	LD	A,(IX+#09)
+	CP	#19
+	JR	Z,HvF1
+	LD	C,#07
+	JR	HvF1
+SOUNDX
+	EX	AF,af'
+	LD	A,(isGS)
+	OR	A
+	RET	Z
+	LD	A,(MUSONF+1)
+	OR	A
+	RET	Z
+	PUSH	HL
+	PUSH	DE
+	PUSH	BC
+	LD	A,(R128)
+	PUSH	AF
+	CALL	MEM6
+	EX	AF,af'
+	LD	E,#00
+	CALL	ZZdist8+2
+	POP	AF
+	CALL	MEM
+	POP	BC
+	POP	DE
+	POP	HL
+	RET
+SOUNDXn
+	PUSH	HL
+	PUSH	DE
+	PUSH	BC
+	CALL	SOUNDn
+	POP	BC
+	POP	DE
+	POP	HL
+	RET
+	CALL	MEM6
+	CALL	setGS
+	EI
+	JP	MEM7
+FX_N
+	RST	#38
+	EX	AF,af'
+	INC	B
+	LD	C,#0B
+	DEC	B
+	DEC	B
+	DEC	C
+	LD	BC,#0C09
+	INC	BC
+	LD	(BC),A
+	INC	BC
+	RST	#38
+	RST	#38
+	RST	#38
+	RST	#38
+	RST	#38
+	RST	#38
+	RST	#38
+	RST	#38
+	SUB	B
+	SUB	C
+	ADD	A,(HL)
+	ADD	A,(HL)
+	RST	#38
+	RST	#38
+	RST	#38
+	RRCA
+	LD	D,#FD
+	LD	L,(HL)
+	LD	BC,vrXUP+2
+	LD	(BC),A
+	CALL	GMAP2
+	LD	A,(HL)
+	RET
+	JP	NZ,FXnext
+	CALL	kmkadze
+	CALL	kmkadze
+	JP	FXkill
+	CALL	FX_N+31
+	OR	A
+	JP	Z,FXnext
+	LD	(IY+#00),#10
+	LD	DE,#06FC
+	JR	NC,.FX_N_1
+	JP	NZ,v4_FX_N_6
+	LD	DE,#08F8
+.FX_N_1
+	CALL	v4_NEWBUL_27
+	CALL	cMPACT
+	CALL	sMPACT
+	CALL	sMPACT
+	LD	(IY+#05),#03
+	LD	(IY+#00),#16
+	JR	.FX_N_2
+	JP	NZ,v4_FX_N_6
+	LD	DE,#04FC
+	CALL	v4_NEWBUL_27
+	CALL	sMPACT
+	LD	(IY+#00),#15
+.FX_N_2
+	CALL	setNBFX
+	JR	FXnext
+	JR	Z,FXkill
+	LD	A,(IY-#02)
+	DEC	(IY-#02)
+	OR	A
+	JR	NZ,FXnext
+	DEC	(IY-#01)
+	JR	FXnext
+	JR	NZ,v4_FX_N_6
+	CALL	BMPACT
+	LD	(IY+#00),#14
+	LD	(IY+#05),#02
+	JR	FXnext
+	LD	C,#10
+	JR	v4_FX_N_3
+	LD	C,#12
+v4_FX_N_3
+	JR	NZ,FXnext
+	PUSH	BC
+	CALL	BMPACT
+	POP	BC
+	LD	A,C
+	CALL	v4_NEWBUL_3
+	JR	FXnext
+	JR	NZ,v4_FX_N_6
+	CALL	BMPACT
+	JR	FXkill
+	LD	IY,KBUILD+260
+	LD	B,#2C
+	LD	DE,#000C
+v4_FX_N_4
+	LD	A,(IY+#00)
+	OR	A
+	JR	Z,FXadv
+	PUSH	DE
+	PUSH	BC
+	LD	HL,NBmul16+32
+	CALL	WT
+	DEC	(IY+#05)
+	JP	(HL)
+	JR	NZ,FXnext
+FXkill ;probably: FX_N: освободить запись списка эффектов (LD (IY+0),0) и перейти к следующей
+	LD	(IY+#00),#00
+	JR	FXnext
+v4_FX_N_6
+	LD	E,(IY+#06)
+	LD	D,(IY+#07)
+	CALL	v4_NEWBUL_27
+FXnext ;probably: FX_N: восстановить BC, DE и перейти к следующей записи списка эффектов
+	POP	BC
+	POP	DE
+FXadv ;probably: FX_N: IY += DE (длина записи), DJNZ по списку, RET
+	ADD	IY,DE
+	DJNZ	v4_FX_N_4
+	RET
+	JR	NZ,FXnext
+	LD	L,(IY+#01)
+	LD	H,(IY+#02)
+	PUSH	HL
+	CALL	GMAP2
+	LD	(HL),#00
+	POP	HL
+	LD	A,#06
+	EX	AF,af'
+	XOR	A
+	CALL	NEWHER
+	JR	FXkill
+	JR	NZ,v4_FX_N_6
+	CALL	BREPA
+	JR	FXkill
+	XOR	A
+.FX_N_9
+	EX	AF,af'
+	CALL	FX_N+31
+	OR	A
+	JR	Z,FXnext
+	CP	#80
+	JR	C,FXkill
+	CP	#B0
+	JR	NC,FXnext
+	LD	DE,#5000
+	EX	AF,af'
+	PUSH	AF
+	CALL	Z,aMONEY
+	POP	AF
+	CALL	NZ,aMAZUT
+	JR	FXkill
+	XOR	A
+	DEC	A
+	JR	.FX_N_9
+	JR	NZ,FXnext
+	CALL	FX_N+31
+	LD	(HL),#00
+	JR	FXkill
+	JR	Z,FXkill
+	LD	(IY+#00),#0F
+	CALL	sMPACT
+	LD	(IY+#00),#20
+	JR	FXnext
+	CALL	FX_N+31
+	CP	#80
+	JR	C,FXnext
+	CP	#B0
+	JR	NC,FXnext
+	INC	(IY+#00)
+	LD	E,(IY+#01)
+	INC	E
+	LD	D,(IY+#02)
+	LD	IX,KBUILD+260
+	LD	B,#2C
+.FX_N_10
+	PUSH	BC
+	LD	A,(IX+#00)
+	SUB	#27
+	JR	Z,.FX_N_11
+	DEC	A
+	JR	NZ,.FX_N_12
+.FX_N_11
+	LD	L,(IX+#01)
+	LD	H,(IX+#02)
+	CALL	DISTde
+	CP	#0C
+	JR	NC,.FX_N_12
+	LD	(IX+#00),#29
+	LD	(IX+#05),#02
+	PUSH	HL
+	CALL	.FX_N_13
+	POP	HL
+	DEC	H
+	CALL	.FX_N_13
+.FX_N_12
+	LD	BC,#000C
+	ADD	IX,BC
+	POP	BC
+	DJNZ	.FX_N_10
+	JP	FXnext
+.FX_N_13
+	CALL	GMAP
+	LD	A,(HL)
+	OR	A
+	RET	Z
+	CP	#29
+	RET	NC
+	SET	4,H
+	LD	(HL),#00
+	RET
+	CALL	FX_N+31
+	OR	A
+	JP	Z,FXnext
+	SUB	#80
+	JP	C,FXkill
+	LD	(HER_N),A
+	CALL	N_IX
+	LD	A,(IX+#03)
+	CP	#01
+	JP	NZ,FXnext
+	PUSH	BC
+	POP	BC
+	PUSH	IY
+	DEC	B
+	JR	Z,.FX_N_14
+	LD	DE,#000C
+	ADD	IY,DE
+	CALL	.FX_N_16
+	JR	C,.FX_N_15
+.FX_N_14
+	LD	B,#2C
+	LD	IY,KBUILD+260
+	CALL	.FX_N_16
+.FX_N_15
+	POP	IY
+	JP	FXnext
+.FX_N_16
+	LD	A,(IY+#00)
+	CP	#24
+	JR	NZ,.FX_N_20
+	CALL	HL_IX0
+	CALL	GMAP2
+	LD	(HL),#00
+	CALL	IX_stop
+	LD	(IX+#03),A
+	LD	L,(IY+#01)
+	LD	H,(IY+#02)
+	CALL	stayON
+	CALL	IX0_HL
+	PUSH	HL
+	CALL	GMAP2
+	LD	A,(HER_N)
+	OR	#80
+	LD	(HL),A
+	POP	HL
+	LD	A,(IX+#04)
+	CP	#09
+	PUSH	AF
+	CALL	NZ,nH0
+	POP	AF
+	CALL	Z,nH1
+	LD	HL,SEL_T
+	LD	A,(HL)
+	OR	A
+	JR	Z,.FX_N_19
+	CP	#07
+	JR	NC,.FX_N_19
+	LD	B,A
+.FX_N_17
+	INC	HL
+	LD	A,(HER_N)
+	CP	(HL)
+	JR	Z,.FX_N_18
+	DJNZ	.FX_N_17
+	JR	.FX_N_19
+.FX_N_18
+	LD	A,(isMAP)
+	OR	A
+	JR	NZ,.FX_N_19
+	CALL	ces0
+.FX_N_19
+	SCF
+	RET	C
+.FX_N_20
+	ADD	IY,DE
+	DJNZ	.FX_N_16
+	RET
+	JR	Z,.FX_N_21
+	PUSH	IY
+	POP	IX
+	LD	A,#17
+	CALL	NEWBUL
+	LD	DE,#04FC
+	CALL	v4_NEWBUL_27
+	LD	(IY+#05),#05
+	PUSH	IX
+	POP	IY
+	JP	v4_FX_N_6
+.FX_N_21
+	PUSH	IY
+	POP	IX
+	CALL	v4_FX_N_22
+	PUSH	IX
+	POP	IY
+	LD	L,(IY-#02)
+	LD	H,(IY-#01)
+	LD	A,L
+	SRL	H
+	RRA
+	SRL	H
+	RRA
+	SRL	H
+	RRA
+	SRL	A
+	LD	(IY+#02),A
+	LD	L,(IY-#04)
+	LD	H,(IY-#03)
+	LD	A,L
+	SRL	H
+	RRA
+	SRL	H
+	RRA
+	SRL	H
+	RRA
+	SRL	A
+	LD	(IY+#01),A
+	CALL	kmkadze
+	JP	FXkill
+v4_FX_N_22
+	LD	B,#05
+.FX_N_23
+	LD	A,#17
+	CALL	NEWBUL
+	CALL	RND
+	AND	#1F
+	ADD	A,#ED
+	LD	E,A
+	CALL	RND
+	AND	#1C
+	ADD	A,#F5
+	LD	D,A
+	CALL	v4_NEWBUL_27
+	LD	A,R
+	AND	#01
+	ADD	A,#03
+	LD	(IY+#05),A
+	DJNZ	.FX_N_23
+	RET
+.FX_N_24
+	LD	A,(IY+#03)
+	CALL	N_IX
+	CALL	HL_IX0
+	LD	A,L
+	OR	A
+	JR	Z,.FX_N_25
+	CALL	v4_NEWBUL_23
+	LD	A,(IY+#05)
+	OR	A
+	RET	NZ
+	LD	A,(IX+#07)
+	AND	#0F
+	LD	(IX+#07),A
+.FX_N_25
+	POP	AF
+	JP	FXkill
+	CALL	.FX_N_24
+	LD	C,#30
+	DEC	(IX+#05)
+	JR	NZ,.FX_N_26
+	INC	(IX+#05)
+	JR	.FX_N_26
+	CALL	.FX_N_24
+	LD	C,#34
+	CALL	IX_mov
+	LD	A,(TIC)
+	AND	#07
+	JR	NZ,.FX_N_26
+	CALL	HL_IX0
+	CALL	RND
+	AND	#07
+	LD	DE,GO_Ntb
+	ADD	A,A
+	ADD	A,E
+	LD	E,A
+	LD	A,(DE)
+	ADD	A,L
+	LD	L,A
+	INC	DE
+	LD	A,(DE)
+	ADD	A,H
+	LD	H,A
+	CALL	IXt_HL
+	BIT	7,(IX+#02)
+	JR	Z,.FX_N_26
+	LD	A,(IX+#07)
+	AND	#F0
+	LD	(IX+#07),A
+.FX_N_26
+	CALL	HL_IX0
+.FX_N_27
+	CALL	RND
+	AND	#7F
+	CP	#60
+	JR	NC,.FX_N_27
+	PUSH	AF
+	PUSH	HL
+	CALL	N_IX
+	POP	HL
+	CALL	DIST2
+	POP	DE
+	CP	#01
+	JR	NZ,.FX_N_28
+	PUSH	IY
+	LD	A,C
+	LD	C,D
+	CALL	NEWBUL
+	POP	IY
+.FX_N_28
+	JP	FXnext
+	CALL	.FX_N_24
+	JP	FXnext
+	CALL	.FX_N_24
+	CALL	HL_IX0
+	EX	DE,HL
+	LD	B,#08
+	LD	HL,GO_Nt0
+v4_FX_N_29
+	LD	A,B
+	PUSH	HL
+	PUSH	BC
+	CALL	WT
+	LD	A,E
+	ADD	A,L
+	LD	L,A
+	LD	A,D
+	ADD	A,H
+	LD	H,A
+	CALL	_sMPAC
+	POP	BC
+	POP	HL
+	DJNZ	v4_FX_N_29
+	JP	FXnext
+v4_FX_N_30
+	LD	BC,#0000
+	LD	A,E
+	SUB	L
+	JR	NC,.FX_N_31
+	NEG
+	INC	C
+.FX_N_31
+	LD	E,A
+	LD	A,D
+	SUB	H
+	JR	NC,.FX_N_32
+	NEG
+	INC	B
+.FX_N_32
+	LD	D,A
+	CP	E
+	RET
+v4_FX_N_33
+	CALL	v4_FX_N_30
+	LD	A,#08
+	PUSH	AF
+	JR	NC,v4_FX_N_34
+	LD	A,E
+	LD	E,D
+	LD	D,A
+v4_FX_N_34
+	LD	L,E
+	LD	H,#00
+	JR	v4_FX_N_37
+v4_FX_N_35
+	CALL	v4_FX_N_30
+	LD	A,#10
+	PUSH	AF
+	JR	NC,.FX_N_36
+	LD	A,E
+	LD	E,D
+	LD	D,A
+.FX_N_36
+	LD	L,E
+	LD	H,#00
+	ADD	HL,HL
+v4_FX_N_37
+	ADD	HL,HL
+	ADD	HL,HL
+	ADD	HL,HL
+	INC	HL
+	EX	DE,HL
+	LD	L,H
+	CALL	DIVB2
+	POP	AF
+	LD	D,A
+	JR	NC,.FX_N_38
+	LD	A,E
+	LD	E,D
+	LD	D,A
+.FX_N_38
+	LD	A,C
+	OR	A
+	JR	Z,.FX_N_39
+	LD	A,E
+	NEG
+	LD	E,A
+.FX_N_39
+	LD	A,B
+	OR	A
+	JR	Z,.FX_N_40
+	LD	A,D
+	NEG
+	LD	D,A
+.FX_N_40
+	LD	(IY+#06),E
+	LD	(IY+#07),D
+	RET
+DIRF8
+	CALL	DIR
+	BIT	0,A
+	RET	Z
+	PUSH	AF
+	LD	A,E
+	SUB	L
+	JR	NC,.DIRF8_1
+	NEG
+.DIRF8_1
+	LD	L,A
+	LD	A,D
+	SUB	H
+	JR	NC,.DIRF8_2
+	NEG
+.DIRF8_2
+	LD	H,A
+	SLA	A
+	CP	L
+	JR	C,.DIRF8_3
+	LD	A,L
+	SLA	A
+	CP	H
+	JR	C,.DIRF8_4
+	POP	AF
+	RET
+	LD	(BC),A
+	LD	(BC),A
+	LD	B,#06
+	NOP
+	INC	B
+	INC	B
+	NOP
+.DIRF8_3
+	LD	HL,.DIRF8_2+14
+	JR	.DIRF8_5
+.DIRF8_4
+	LD	HL,.DIRF8_2+18
+.DIRF8_5
+	POP	AF
+	SRA	A
+	JP	BA
+DIRF16
+	CALL	DIR_A
+	CPL
+	BIT	0,A
+	RET	Z
+	PUSH	AF
+	LD	A,E
+	SUB	L
+	JR	NC,.DIRF16_1
+	NEG
+.DIRF16_1
+	ADD	A,A
+	ADD	A,A
+	LD	L,A
+	LD	A,D
+	SUB	H
+	JR	NC,.DIRF16_2
+	NEG
+.DIRF16_2
+	ADD	A,A
+	ADD	A,A
+	LD	H,A
+	CP	L
+	JR	NC,.DIRF16_3
+	LD	A,H
+	LD	H,L
+	LD	L,A
+.DIRF16_3
+	LD	A,H
+	SRA	A
+	SRA	A
+	CP	L
+	JR	NC,.DIRF16_4
+	LD	H,A
+	ADD	A,A
+	ADD	A,H
+	CP	L
+	JR	C,.DIRF16_5
+	POP	AF
+	RET
+	NOP
+	INC	B
+	INC	B
+	EX	AF,af'
+	EX	AF,af'
+	INC	C
+	INC	C
+	NOP
+	LD	(BC),A
+	LD	(BC),A
+	LD	B,#06
+	LD	A,(BC)
+	LD	A,(BC)
+	LD	C,#0E
+.DIRF16_4
+	LD	HL,.DIRF16_3+16
+	JR	.DIRF16_6
+.DIRF16_5
+	LD	HL,.DIRF16_3+24
+.DIRF16_6
+	POP	AF
+	SRA	A
+	JP	BA
+STARher
+	LD	A,#19
+	JR	NEWBUL
+STARpos
+	LD	A,#18
+NEWBUL
+NEWBUL_6
+	EX	AF,af'
+	EXX
+	LD	HL,KBUILD+260
+	LD	DE,#000C
+	LD	B,#2B
+.NEWBUL_1
+	LD	A,(HL)
+	OR	A
+	JR	Z,.NEWBUL_2
+	ADD	HL,DE
+	DJNZ	.NEWBUL_1
+.NEWBUL_2
+	PUSH	HL
+	POP	IY
+	EXX
+	EX	AF,af'
+v4_NEWBUL_3
+	LD	(IY+#00),A
+	CALL	setNBFX
+	LD	HL,.NEWBUL_20+6
+	CALL	WT
+	JP	(HL)
+	CALL	HL_IX0
+	CALL	NBmul16
+	LD	DE,#0CF8
+	CALL	v4_NEWBUL_27
+	LD	(IY+#05),#21
+	RET
+	INC	B
+	DEC	B
+	INC	C
+	LD	BC,#FF0F
+	INC	C
+	OR	#04
+	POP	AF
+	DEFB	#FC,#F7,#F9	; data (not code): CALL M,v4_onsee_6+21
+	RST	#38
+	DEFB	#FC,#02,#21	; data (not code): CALL M,#2102
+	POP	HL
+	LD	L,A
+	JR	.NEWBUL_4
+	LD	HL,.NEWBUL_4+114
+.NEWBUL_4
+	PUSH	HL
+	LD	A,(HER_N)
+	LD	(IY+#03),A
+	LD	A,(IX+#0C)
+	LD	(IY+#01),A
+	CALL	HL_IX0
+	CALL	NBmul16
+	LD	A,(IX+#02)
+	LD	(IY+#04),A
+	LD	(IY+#05),#02
+	POP	HL
+	CALL	WT
+	EX	DE,HL
+	CALL	v4_NEWBUL_27
+	LD	A,R
+	AND	#03
+	RET	Z
+	CALL	RND
+	AND	#07
+	LD	HL,GO_Ntb
+	CALL	WT
+	EX	DE,HL
+	CALL	v4_NEWBUL_27
+	RET
+	LD	A,(HER_N)
+	LD	(IY+#03),A
+	LD	A,(IX+#0C)
+	LD	(IY+#01),A
+	CALL	HL_IX0
+	CALL	NBmul16
+	LD	DE,v4_onsee_13+6
+	CALL	v4_NEWBUL_27
+	LD	A,(IX+#02)
+	LD	HL,GO_Ntb
+	ADD	A,A
+	ADD	A,L
+	LD	L,A
+	LD	A,(HL)
+	ADD	A,A
+	ADD	A,A
+	LD	(IY+#06),A
+	LD	E,A
+	INC	HL
+	LD	A,(HL)
+	ADD	A,A
+	ADD	A,A
+	LD	(IY+#07),A
+	LD	D,A
+	CALL	v4_NEWBUL_27
+	LD	(IY+#05),#04
+	RET
+	INC	B
+	INC	BC
+	ADD	HL,BC
+	LD	(BC),A
+	INC	C
+	DEFB	#FD
+	EX	AF,af'
+	RET	M
+	INC	B
+	PUSH	AF
+	NOP
+	RET	M
+	DEFB	#FC,#FD,#FF	; data (not code): CALL M,#FFFD
+	LD	(BC),A
+.NEWBUL_5
+	PUSH	DE
+	CALL	v4_NEWBUL_21
+	LD	DE,sbgr1+38
+	CALL	v4_NEWBUL_27
+	POP	DE
+	CALL	HL_IX0
+	JR	.NEWBUL_8
+.NEWBUL_6
+	PUSH	DE
+	CALL	v4_NEWBUL_21
+	LD	DE,pch19e0+15
+	CALL	v4_NEWBUL_27
+	POP	DE
+	CALL	HL_IX0
+	JR	.NEWBUL_8
+.NEWBUL_7
+	CALL	HL_IX0
+	PUSH	HL
+	PUSH	DE
+	CALL	NBmul16
+	LD	DE,seeRet+87
+	CALL	v4_NEWBUL_27
+	POP	DE
+	POP	HL
+.NEWBUL_8
+	LD	A,(HER_N)
+	LD	(IY+#03),A
+	LD	A,(IX+#0C)
+	LD	(IY+#01),A
+	LD	A,(IX+#02)
+	LD	(IY+#04),A
+	CALL	DISTde
+	RET
+	CALL	.NEWBUL_7
+	ADD	A,A
+	INC	A
+	LD	(IY+#05),A
+	JP	v4_FX_N_33
+	CALL	.NEWBUL_6
+	LD	(IY+#01),E
+	LD	(IY+#02),D
+	ADD	A,A
+	INC	A
+	LD	(IY+#05),A
+	JP	v4_FX_N_33
+	CALL	.NEWBUL_5
+	INC	A
+	LD	(IY+#05),A
+	LD	A,(IX+#02)
+	LD	(IY+#04),A
+	JP	v4_FX_N_35
+	CALL	.NEWBUL_6
+	INC	A
+	LD	(IY+#05),A
+	LD	A,(IX+#02)
+	CPL
+	LD	(IY+#04),A
+	JP	v4_FX_N_35
+	CALL	.NEWBUL_7
+	LD	(IY+#01),E
+	LD	(IY+#02),D
+	INC	A
+	LD	(IY+#05),A
+	JP	v4_FX_N_35
+	LD	(IY+#05),#02
+	LD	A,(IY+#01)
+	BIT	7,A
+	JR	Z,.NEWBUL_9
+	CALL	B_IX
+	CALL	HL_IX0
+	CALL	NBmul16
+	LD	DE,#FF04
+	CALL	v4_NEWBUL_27
+	JR	.NEWBUL_10
+.NEWBUL_9
+	CALL	N_IX
+	CALL	v4_NEWBUL_26
+	BIT	7,(IX+#02)
+	JR	Z,.NEWBUL_10
+	INC	(IY+#00)
+.NEWBUL_10
+	LD	A,R
+	AND	#3F
+	LD	HL,GO_Ntb
+	CALL	WT
+	EX	DE,HL
+	CALL	v4_NEWBUL_27
+	LD	A,(IX+#00)
+	OR	A
+	RET	NZ
+	LD	(IY+#00),A
+	RET
+	CALL	.NEWBUL_15
+	LD	(IX+#05),#BE
+	RET
+	CALL	.NEWBUL_15
+	DEC	(IY+#01)
+	RET
+	CALL	.NEWBUL_13
+	RET	NZ
+	LD	(IY+#03),#FF
+	XOR	A
+	LD	(HL),A
+	LD	(IY+#00),A
+	LD	L,(IY+#01)
+	LD	H,(IY+#02)
+	PUSH	IX
+	LD	B,#2C
+	LD	DE,#000C
+	LD	IX,KBUILD+260
+.NEWBUL_11
+	LD	A,(IX+#00)
+	CP	#20
+	JR	NZ,.NEWBUL_12
+	LD	A,(IX+#01)
+	SUB	L
+	JR	NZ,.NEWBUL_12
+	LD	A,(IX+#02)
+	SUB	H
+	JR	NZ,.NEWBUL_12
+	POP	IX
+	INC	A
+	RET
+.NEWBUL_12
+	ADD	IX,DE
+	DJNZ	.NEWBUL_11
+	POP	IX
+	LD	(IY+#00),#20
+	XOR	A
+	RET	Z
+.NEWBUL_13
+	EX	DE,HL
+	LD	(IY+#01),L
+	LD	(IY+#02),H
+	PUSH	HL
+	LD	(IY+#05),#96
+	CALL	NBmul16
+	LD	A,R
+	AND	#07
+	LD	HL,GO_Nt0
+	CALL	WT
+	EX	DE,HL
+	CALL	v4_NEWBUL_27
+	POP	HL
+	CALL	GMAP2
+	LD	A,(HL)
+	OR	A
+	JR	NZ,.NEWBUL_14
+	LD	(HL),#02
+	RET
+.NEWBUL_14
+	LD	(IY+#00),#00
+	RET
+.NEWBUL_15
+	LD	C,#02
+.NEWBUL_16
+	EX	DE,HL
+	PUSH	HL
+	CALL	GMAP2
+	LD	(HL),C
+	POP	HL
+	LD	(IY+#01),L
+	LD	(IY+#02),H
+	JP	NBmul16
+	PUSH	DE
+	CALL	.NEWBUL_15
+	POP	HL
+	DEC	H
+	CALL	GMAP2
+	LD	(HL),#02
+	LD	A,(IY-#02)
+	SUB	#08
+	LD	(IY-#02),A
+	RET	NC
+	DEC	(IY-#01)
+	RET
+	LD	(IY+#03),#FF
+	LD	C,#00
+	JR	.NEWBUL_16
+.NEWBUL_17
+	CALL	v4_NEWBUL_23
+	CALL	HL_IX0
+	LD	(IY+#01),L
+	LD	(IY+#02),H
+	LD	(IY+#05),#03
+	RET
+	CALL	.NEWBUL_17
+	LD	(IY+#03),#FF
+	JP	v4_FX_N_22
+	CALL	.NEWBUL_7
+	ADD	A,A
+	SUB	#06
+	LD	C,A
+	LD	A,R
+	AND	#07
+	ADD	A,C
+	LD	(IY+#05),A
+	LD	(IY+#03),#FF
+	JP	v4_FX_N_33
+	CALL	v4_NEWBUL_24
+	LD	(IY+#05),#07
+	BIT	7,(IX+#02)
+	RET	NZ
+	DEC	(IY+#00)
+	RET
+	PUSH	DE
+	EX	DE,HL
+	CALL	NBmul16
+	LD	(IY+#05),#07
+	POP	DE
+	RET
+	LD	E,#20
+	LD	B,#78
+	JR	.NEWBUL_18
+	LD	E,#30
+	LD	B,#78
+	JR	.NEWBUL_19
+	LD	E,#40
+	LD	B,#78
+	JR	.NEWBUL_19
+	LD	E,#50
+	LD	B,#50
+	JR	.NEWBUL_18
+	LD	E,#10
+.NEWBUL_18
+	LD	A,(IX+#04)
+	CP	#06
+	JR	Z,.NEWBUL_20
+	CP	#12
+.NEWBUL_19
+	JR	Z,.NEWBUL_20
+	LD	(IY+#03),C
+	LD	(IY+#05),B
+	PUSH	IY
+	POP	HL
+	LD	BC,BUF512+1604
+	XOR	A
+	SBC	HL,BC
+	JR	Z,.NEWBUL_20
+	LD	A,(IX+#07)
+	LD	B,A
+	AND	#F0
+	JR	NZ,.NEWBUL_20
+	LD	A,B
+	OR	E
+	LD	(IX+#07),A
+	CALL	v4_NEWBUL_23
+	BIT	7,(IX+#02)
+	RET	Z
+	INC	(IY+#00)
+	XOR	A
+	RET
+.NEWBUL_20
+	XOR	A
+	LD	(IY+#00),A
+	INC	A
+	RET
+; ---- таблицы слов (были разобраны как код: "инструкции" со случайными метками): адреса обработчиков NEWBUL/FX (probably), символьные;
+; числа (индексы, #FFxx - отрицательные смещения) оставлены числами; в комментарии - значения образа v0.04
+	DEFW	#0000,v4_NEWBUL_3+51,v4_NEWBUL_3+112,v4_NEWBUL_3+46,v4_NEWBUL_3+282,v4_NEWBUL_3+254 ;0000 6FF6 7033 6FF1 70DD 70C1
+	DEFW	v4_NEWBUL_3+254,v4_NEWBUL_3+315,v4_NEWBUL_3+298,v4_NEWBUL_3+51,v4_NEWBUL_3+254,v4_NEWBUL_3+265 ;70C1 70FE 70ED 6FF6 70C1 70CC
+	DEFW	v4_NEWBUL_3+298,v4_NEWBUL_3+599,v4_NEWBUL_3+589,#FFF1,v4_NEWBUL_3+331,#0011 ;70ED 721A 7210 FFF1 710E 0011
+	DEFW	v4_NEWBUL_3+331,#0013,#0014,#0015,v4_NEWBUL_3+572,v4_NEWBUL_3+572 ;710E 0013 0014 0015 71FF 71FF
+	DEFW	v4_NEWBUL_3+637,v4_NEWBUL_3+621,#FFE6,#FFE5,#FFE4,v4_NEWBUL_3+13 ;7240 7230 FFE6 FFE5 FFE4 6FD0
+	DEFW	v4_NEWBUL_3+254,v4_NEWBUL_3+397,v4_NEWBUL_3+412,v4_NEWBUL_3+477,v4_NEWBUL_3+568,v4_NEWBUL_3+568 ;70C1 7150 715F 71A0 71FB 71FB
+	DEFW	v4_NEWBUL_3+568,v4_NEWBUL_3+405,#0026,v4_NEWBUL_3+522,v4_NEWBUL_3+540,#0029 ;71FB 7158 0026 71CD 71DF 0029
+	DEFW	v4_NEWBUL_3+564,#FFD5,v4_NEWBUL_3+672,#002D,v4_NEWBUL_3+648,#002F ;71F7 FFD5 7263 002D 724B 002F
+	DEFW	v4_NEWBUL_3+654,#7831,v4_NEWBUL_3+659,#0033,v4_NEWBUL_3+666,#0035 ;7251 7831 7256 0033 725D 0035
+v4_NEWBUL_21
+	PUSH	IX
+	POP	HL
+	PUSH	IY
+	POP	DE
+	DEC	HL
+	DEC	DE
+	LDD
+	LDD
+	LDD
+	LDD
+	RET
+v4_NEWBUL_22
+	CALL	v4_NEWBUL_21
+	LD	A,(IX+#04)
+	LD	HL,AT_TYP
+	CALL	BA
+	AND	#03
+	RET
+v4_NEWBUL_23
+	CALL	v4_NEWBUL_22
+	LD	DE,#04FC
+	JR	Z,v4_NEWBUL_27
+	LD	D,#00
+	CP	#02
+	JR	Z,v4_NEWBUL_27
+	RET
+v4_NEWBUL_24
+	CALL	v4_NEWBUL_22
+	RET	Z
+	LD	DE,pch19e0+7
+	CP	#02
+	JR	Z,v4_NEWBUL_27
+v4_NEWBUL_25
+	LD	DE,seeRet+87
+	JR	v4_NEWBUL_27
+v4_NEWBUL_26
+	CALL	v4_NEWBUL_22
+	LD	DE,seeRet+87
+	JR	Z,v4_NEWBUL_27
+	LD	D,#F8
+	CP	#02
+	JR	Z,v4_NEWBUL_27
+	LD	E,#08
+v4_NEWBUL_27
+	PUSH	IY
+	JP	cii_
+NBmul16 ;probably: HL = L*16 (4 раза ADD HL,HL); общий конец расчётов NEWBUL
+	PUSH	HL
+	LD	H,#00
+	ADD	HL,HL
+	ADD	HL,HL
+	ADD	HL,HL
+	ADD	HL,HL
+	LD	(IY-#04),L
+	LD	(IY-#03),H
+	POP	AF
+	INC	A
+	ADD	A,A
+	ADD	A,A
+	LD	L,A
+	LD	H,#00
+	ADD	HL,HL
+	ADD	HL,HL
+	DEC	HL
+	DEC	HL
+	DEC	HL
+	LD	(IY-#02),L
+	LD	(IY-#01),H
+	RET
+; ---- таблицы слов (были разобраны как код: "инструкции" со случайными метками): адреса обработчиков NEWBUL/FX (probably), символьные;
+; числа (индексы, #FFxx - отрицательные смещения) оставлены числами; в комментарии - значения образа v0.04
+	DEFW	#0000,FX_N+154,v4_FX_N_3+13,FX_N+154,v4_FX_N_3+13,FX_N+135 ;0000 6BFE 6C0D 6BFE 6C0D 6BEB
+	DEFW	FX_N+135,FX_N+70,v4_FX_N_3+13,FX_N+150,FX_N+135,FX_N+98 ;6BEB 6BAA 6C0D 6BFA 6BEB 6BC6
+	DEFW	v4_FX_N_3+13,v4_FX_N_6+351,FX_N+42,#FFF1,v4_FX_N_4+18,v4_FX_N_4+18 ;6C0D 6D96 6B8E FFF1 6C2F 6C2F
+	DEFW	v4_FX_N_4+18,v4_FX_N_4+18,v4_FX_N_4+18,v4_FX_N_4+20,v4_FX_N_4+18,v4_FX_N_4+18 ;6C2F 6C2F 6C2F 6C31 6C2F 6C2F
+	DEFW	v4_FX_N_4+18,v4_FX_N_4+18,#FFE6,#FFE5,#FFE4,FX_N+119 ;6C2F 6C2F FFE6 FFE5 FFE4 6BDB
+	DEFW	v4_FX_N_6+40,v4_FX_N_6+16,v4_FX_N_6+90,v4_FX_N_6+81,v4_FX_N_6+47,v4_FX_N_6+77 ;6C5F 6C47 6C91 6C88 6C66 6C84
+	DEFW	v4_FX_N_6+198,v4_FX_N_6+105,v4_FX_N_6+9,v4_FX_N_6+9,v4_FX_N_6+9,v4_FX_N_4+18 ;6CFD 6CA0 6C40 6C40 6C40 6C2F
+	DEFW	FX_N+54,#FFD5,v4_FX_N_22+183,v4_FX_N_22+183,v4_FX_N_22+177,v4_FX_N_22+177 ;6B9A FFD5 6EA4 6EA4 6E9E 6E9E
+	DEFW	v4_FX_N_22+71,v4_FX_N_22+71,v4_FX_N_22+177,v4_FX_N_22+177,v4_FX_N_22+86,v4_FX_N_22+86 ;6E34 6E34 6E9E 6E9E 6E43 6E43
+	XOR	A
+	LD	BC,#7FFD
+	OUT	(C),A
+	JP	#0000
+_wMAIN
+	JP	wMAIN
+	DEFS	42
+INTRP
+	EX	DE,HL
+	EX	(SP),HL
+	LD	(INTRQ+1),HL
+	EX	DE,HL
+	POP	DE
+	LD	(INTRS+1),SP
+	LD	SP,INTRP
+	CALL	INAR0
+
+
+
+;---уст GS из меню
+setGS_7	; (в v0.04 код удалён, метка сохранена для ссылок)
+
+;--------------
+
+;снар
+;
+
+
+;про
+
+
+

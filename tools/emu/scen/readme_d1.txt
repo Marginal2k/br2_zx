@@ -1,0 +1,11 @@
+boot
+w600
+c:rd_logo
+Kx
+w200
+c:rd_menu
+K1
+w900
+c:rd_roll1
+w1500
+c:rd_roll2

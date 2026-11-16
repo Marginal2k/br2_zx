@@ -1,0 +1,13 @@
+{
+ "outputs": {
+  "data/4bar.dat": {
+   "len": 1536
+  },
+  "data/4font.fnt": {
+   "len": 912
+  },
+  "hum/WNAMES.bin": {
+   "len": 1890
+  }
+ }
+}

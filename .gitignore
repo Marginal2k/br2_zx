@@ -1,0 +1,9 @@
+# generated
+build/
+work/
+__pycache__/
+*.pyc
+
+# third-party originals: the author's archive, disk images by others (not redistributed; see README)
+reference/
+archive/

@@ -1,0 +1,11 @@
+boot
+w600
+Kx
+w150
+K3
+w60
+K1
+w400
+s:t6g_loaded1
+w100
+s:t6g_loaded1b

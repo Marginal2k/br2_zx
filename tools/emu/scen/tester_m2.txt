@@ -1,0 +1,13 @@
+boot
+w600
+Kx
+w200
+K2
+w800
+s:t8_1mb_after_K2
+Kx
+w200
+s:t8_1mb_after_Kx
+K2
+w800
+s:t8_1mb_kun_try

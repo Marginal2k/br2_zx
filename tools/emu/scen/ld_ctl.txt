@@ -1,0 +1,16 @@
+boot
+w1200
+Kx
+w100
+K1
+w400
+p414A:07
+js:sv:save1
+boot
+w1200
+Kx
+w150
+K1
+w400
+s:newgame
+m:money:4147:6

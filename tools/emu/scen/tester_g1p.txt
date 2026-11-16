@@ -1,0 +1,10 @@
+boot
+w600
+s:g1p_boot
+w1500
+s:g1p_demo_30s
+Kx
+w150
+s:g1p_menu
+w1600
+s:g1p_menu_idle_32s
